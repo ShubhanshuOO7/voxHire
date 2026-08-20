@@ -1,3 +1,4 @@
+
 import express from "express"
 import OpenAI from "openai"
 import axios from "axios";
@@ -62,16 +63,9 @@ app.post("/api/v1/user/pre-interview",singleUpload,async(req,res)=>{
         console.log("Before Llama");
         socketHandler(interview.id)
         const response = await preLlama(result,filteredRepos,interview.id)
+        
         // onLlama(interview.id)
-        // const audioPath = `uploads/audio-${Date.now()}.wav`
-        //  const transcript = await transcribe(audioPath);
-        //     const userReply = await prisma.message.create({
-            //         data:{
-                //             type: "User",
-                //             message: transcript,
-                //             InterviewId: interview.id
-                //         }
-                //     })
+        const audioPath = `uploads/audio-${Date.now()}.wav`
                 //    console.log("After Llama")
                 //    console.log(response)
                 //    console.log(transcript)
@@ -95,7 +89,7 @@ app.post("/api/v1/user/pre-interview",singleUpload,async(req,res)=>{
                     
                 })
                 
-                app.post('/api/v1/user/')
+                // app.post('/api/v1/user/')
                 
                 // app.post("/api/v1/user/blob",blobUpload,async(req,res)=>{
                     //     try {

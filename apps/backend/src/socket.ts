@@ -15,6 +15,7 @@ export const socketHandler = (interviewId:string)=>{
                 //    console.log(receivedData)
                 const audioPath = `uploads/audio-${Date.now()}.wav`
                    await fs.writeFile(audioPath,data)
+                   // get data in structure format 
                    const transcript = await transcribe(audioPath);
                    const userReply = await prisma.message.create({
                     data:{
