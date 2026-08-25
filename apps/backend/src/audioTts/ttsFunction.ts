@@ -30,7 +30,7 @@ export const ttsFunction = async (interviewId: string) => {
   const result = await tts.synthesize();
 
   const filename = `${Date.now()}.mp3`;
-  const filepath = `kokoro/${filename}`;
+  const filepath = `audio/${filename}`;
 
   await Bun.write(filepath, result.audio);
 

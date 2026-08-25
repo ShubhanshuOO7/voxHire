@@ -86,12 +86,23 @@ export const preLlama = async (
 };
 
 export const onLlama = async (interviewId: string) => {
-  const messages = await prisma.message.findMany({
+  const dbMessages = await prisma.message.findMany({
     where: {
       InterviewId: interviewId,
     },
   });
-   try {
+
+  const messages = dbMessages.map((msg) => ({
+    role: msg.type === "User" ? "user" : "assistant",
+    content: msg.message,
+  }));
+
+  console.log(
+    "Messages being sent to OpenRouter:",
+    JSON.stringify(messages, null, 2),
+  );
+
+  try {
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
       {
@@ -102,44 +113,50 @@ export const onLlama = async (interviewId: string) => {
         },
         body: JSON.stringify({
           model: "poolside/laguna-s-2.1:free",
-          messages: [
-            {
-              role: "user",
-              content: messages,
-            },
-          ],
+          messages: messages,
         }),
       },
     );
-    console.log("OpenRouter status", response.status);
+
+    console.log("OpenRouter status:", response.status);
+
     if (!response.ok) {
-      throw new Error(`OpenRouter Error: ${response.status}`);
+      const errorText = await response.text();
+
+      console.error("OpenRouter error:", errorText);
+
+      throw new Error(
+        `OpenRouter Error: ${response.status} - ${errorText}`,
+      );
     }
+
     const data = await response.json();
+
     const interview = await prisma.interview.findUnique({
       where: {
         id: interviewId,
       },
     });
+
     if (!interview) {
       throw new Error("Interview not found");
     }
-    const message = await prisma.message.create({
+
+    await prisma.message.create({
       data: {
         type: "Assistant",
         message: data.choices[0].message.content,
         InterviewId: interview.id,
       },
     });
+    
     await ttsFunction(interviewId);
-    console.log(data.choices[0].message);
-    //  const audioPath = `uploads/audio-${Date.now()}.wav`
-    //    const transcript = await transcribe(audioPath);
-    //  console.log(transcript)
+
+    console.log("AI Response:", data.choices[0].message);
+
     return data.choices[0].message;
   } catch (error) {
     console.error("Llama() failed:", error);
     throw error;
   }
-  console.log("messages ye rahe /n", messages);
 };

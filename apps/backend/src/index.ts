@@ -22,6 +22,7 @@ import { onLlama } from "./test.js";
 const app = express();
 app.use(cors())
 app.use(express.json());
+app.use("/audio",express.static(path.join(__dirname,"audio")))
 app.post("/api/v1/user/pre-interview",singleUpload,async(req,res)=>{
     try {
         // console.log(req.body)
@@ -62,10 +63,10 @@ app.post("/api/v1/user/pre-interview",singleUpload,async(req,res)=>{
         }))
         console.log("Before Llama");
         socketHandler(interview.id)
+        const audioPath = `audio-${Date.now()}.mp3`
         const response = await preLlama(result,filteredRepos,interview.id)
         
         // onLlama(interview.id)
-        const audioPath = `uploads/audio-${Date.now()}.wav`
                 //    console.log("After Llama")
                 //    console.log(response)
                 //    console.log(transcript)
@@ -117,7 +118,9 @@ app.post("/api/v1/user/pre-interview",singleUpload,async(req,res)=>{
 //     }
 // })
 
-
+app.get("/api/v1/user/audio",async(req,res)=>{
+    
+})
 
 app.listen(3001,()=>{
     console.log(process.env.DATABASE_URL)
