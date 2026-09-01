@@ -3,12 +3,37 @@ import axios from 'axios'
 import { Button } from './ui/button'
 import { BACKEND_URL } from '@/lib/config'
 import toWav from "audiobuffer-to-wav"
-const socket  = new WebSocket("ws://localhost:8080")
+import { useEffect, useRef } from 'react'
 
-const InterviewSession = ({interviewId,started}:{interviewId:string,started:boolean}) => {
-    socket.onopen = ()=>{
-        console.log("Socket is connected")
-    }
+const InterviewSession = ({interviewId,started,socket}:{interviewId:string,started:boolean,socket:WebSocket}) => {
+    const audioRef = useRef<HTMLAudioElement>(null);
+
+    useEffect(() => {     
+        socket.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                console.log(data);
+                if (data.type === 'audio') {
+                    console.log('Received audio file:', data.filename);
+                    // Play the audio file
+                    const audioUrl = `${BACKEND_URL}/audio/${data.filename}`;
+                    if (audioRef.current) {
+                        audioRef.current.src = audioUrl;
+                        audioRef.current.play().catch(err => {
+                            console.error('Audio playback failed:', err);
+                        });
+                    }
+                }
+            } catch (e) {
+                console.log('Received non-JSON message:', event.data);
+            }
+        }
+
+        return () => {
+            socket.onmessage = null;
+        }
+    }, []);
+
     const vad = useMicVAD({
             onnxWASMBasePath:
       "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
@@ -66,6 +91,7 @@ const InterviewSession = ({interviewId,started}:{interviewId:string,started:bool
         })
   return (
     <div>
+        <audio ref={audioRef} style={{ display: 'none' }} />
         <Button onClick={vad.pause} >Stop</Button>
         {!started && <Button onClick={vad.start}>Start Interview</Button>}
     </div>

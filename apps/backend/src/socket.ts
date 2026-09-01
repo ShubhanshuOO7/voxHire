@@ -4,8 +4,11 @@ import { transcribe } from "./exec.js";
 import { prisma } from "./db.js";
 import { onLlama } from "./Llama/Llama.js";
 
+export const wss = new WebSocketServer({port:8080})
 
-const wss = new WebSocketServer({port:8080})
+// Map interviewId to WebSocket connection
+const interviewSockets = new Map<string, any>();
+
 export const socketHandler = (interviewId:string)=>{
      wss.on("connection",(ws)=>{
         console.log("socket is connected")
@@ -13,9 +16,10 @@ export const socketHandler = (interviewId:string)=>{
         ws.on('message',async(data:any)=>{
                 //    const receivedData = JSON.parse(data)
                 //    console.log(receivedData)
-                const audioPath = `uploads/audio-${Date.now()}.wav`
+
+                   const audioPath = `uploads/audio-${Date.now()}.wav`
                    await fs.writeFile(audioPath,data)
-                   // get data in structure format 
+                   // get data in structure format
                    const transcript = await transcribe(audioPath);
                    const userReply = await prisma.message.create({
                     data:{
@@ -26,14 +30,18 @@ export const socketHandler = (interviewId:string)=>{
                    })
                    await onLlama(interviewId)
                    console.log(transcript)
-                           
+
         })
         ws.on('close',()=>{
             console.log("Client disconnected")
         })
         // ws.send({
-        //     file: 
+        //     file:
         // })
     })
+}
+
+export const getSocketForInterview = (interviewId: string) => {
+    return interviewSockets.get(interviewId);
 }
 

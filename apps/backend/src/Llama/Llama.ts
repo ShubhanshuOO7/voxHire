@@ -5,7 +5,7 @@ import { ttsFunction } from "../audioTts/ttsFunction.js";
 export const preLlama = async (
   result: any,
   filteredRepos: any,
-  interviewId: string,
+  interviewId: string
 ) => {
   console.log("Entered Llama");
   const InitialMessage = `You are an experienced technical interviewer.
@@ -55,7 +55,7 @@ export const preLlama = async (
     );
     console.log("OpenRouter status", response.status);
     if (!response.ok) {
-      throw new Error(`OpenRouter Error: ${response.status}`);
+      throw new Error(`OpenRouter Error: ${response.statusText}`);
     }
     const data = await response.json();
     const interview = await prisma.interview.findUnique({

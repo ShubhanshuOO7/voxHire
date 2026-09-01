@@ -62,8 +62,8 @@ app.post("/api/v1/user/pre-interview",singleUpload,async(req,res)=>{
             
         }))
         console.log("Before Llama");
+        
         socketHandler(interview.id)
-        const audioPath = `audio-${Date.now()}.mp3`
         const response = await preLlama(result,filteredRepos,interview.id)
         
         // onLlama(interview.id)
@@ -72,7 +72,8 @@ app.post("/api/v1/user/pre-interview",singleUpload,async(req,res)=>{
                 //    console.log(transcript)
                 //    console.log(userReply)
                 return res.status(200).json({
-                    interviewId: interview.id
+                    interviewId: interview.id,
+                    
                 })
                 // TODO url can be very malformed use a SLM here
                 
@@ -118,9 +119,7 @@ app.post("/api/v1/user/pre-interview",singleUpload,async(req,res)=>{
 //     }
 // })
 
-app.get("/api/v1/user/audio",async(req,res)=>{
-    
-})
+
 
 app.listen(3001,()=>{
     console.log(process.env.DATABASE_URL)
