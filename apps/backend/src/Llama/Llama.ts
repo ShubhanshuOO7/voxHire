@@ -1,6 +1,7 @@
 import { prisma } from "../db.js";
 import { transcribe } from "../exec.js";
 import { ttsFunction } from "../audioTts/ttsFunction.js";
+import { error } from "node:console";
 
 export const preLlama = async (
   result: any,
@@ -43,7 +44,7 @@ export const preLlama = async (
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "poolside/laguna-s-2.1:free",
+          model: "dots-studio/dots-3-note-preview:free",
           messages: [
             {
               role: "user",
@@ -112,7 +113,7 @@ export const onLlama = async (interviewId: string) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "poolside/laguna-s-2.1:free",
+          model: "dots-studio/dots-3-note-preview:free",
           messages: messages,
         }),
       },
@@ -131,7 +132,11 @@ export const onLlama = async (interviewId: string) => {
     }
 
     const data = await response.json();
-
+    const content = data.choices[0].message.content
+    if(!content){
+      console.log("No response recieved from AI")
+      throw new Error("No response recieved from AI")
+    }
     const interview = await prisma.interview.findUnique({
       where: {
         id: interviewId,

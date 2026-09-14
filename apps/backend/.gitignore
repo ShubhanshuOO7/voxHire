@@ -4,6 +4,7 @@ models
 # output
 out
 uploads
+audio
 dist
 *.tgz
 

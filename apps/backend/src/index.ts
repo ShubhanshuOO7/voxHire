@@ -1,28 +1,23 @@
 
 import express from "express"
-import OpenAI from "openai"
 import axios from "axios";
 import { preInterviewBody } from "./types.js";
 import cors from "cors"
 import {singleUpload } from "./multer.js";
-import fs from "fs/promises"
-import { blobUpload } from "./audio.js";
 import path from "path";
-import { fileTypeFromBuffer } from "file-type";
-import { WebSocketServer } from "ws";
 import {extractText,getDocumentProxy} from "unpdf"
 
-import { transcribe } from "./exec.js";
 import { socketHandler } from "./socket.js";
 import {prisma} from "./db.js"
 import {preLlama} from "./Llama/Llama.js"
-import { transcode } from "buffer";
-import { onLlama } from "./test.js";
+import { ttsFunction } from "./audioTts/ttsFunction.js";
+import { any, string } from "zod";
 
 const app = express();
 app.use(cors())
 app.use(express.json());
-app.use("/audio",express.static(path.join(__dirname,"audio")))
+
+app.use("/audio",express.static(path.join(__dirname,"../audio")))
 app.post("/api/v1/user/pre-interview",singleUpload,async(req,res)=>{
     try {
         // console.log(req.body)
@@ -119,7 +114,20 @@ app.post("/api/v1/user/pre-interview",singleUpload,async(req,res)=>{
 //     }
 // })
 
+app.post("/api/v1/user/firtAud",(req,res)=>{
+    const id = req.query.id
+    if(typeof id=== "string"){
+        const filename = ttsFunction(id)
+        console.log(filename)
+        res.status(200).send({
+            filename
+        })
 
+    }else{
+        res.status(400).send({message:"Invalid search query"})
+    }
+   
+})
 
 app.listen(3001,()=>{
     console.log(process.env.DATABASE_URL)

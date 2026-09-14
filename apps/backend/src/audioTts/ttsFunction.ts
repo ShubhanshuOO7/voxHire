@@ -1,6 +1,6 @@
 import { UniversalEdgeTTS } from "edge-tts-universal";
 import { prisma } from "../db";
-import { getSocketForInterview } from "../socket.js";
+import { wss } from "../socket.js";
 
 export const ttsFunction = async (interviewId: string) => {
   const latestMessage = await prisma.message.findFirst({
@@ -29,21 +29,25 @@ export const ttsFunction = async (interviewId: string) => {
   );
 
   const result = await tts.synthesize();
-  
+
   const filename = `${Date.now()}.mp3`;
   const filepath = `audio/${filename}`;
-  
+
   await Bun.write(filepath, result.audio);
 
-  // Send audio filename via WebSocket to the specific client for this interview
-  const socket = getSocketForInterview(interviewId);
-  if (socket && socket.readyState === 1) { // WebSocket.OPEN
-    socket.send(JSON.stringify({
-      type: "audio",
-      filename,
-      message: latestMessage.message
-    }));
-  }
+  console.log(`Audio generated: ${filename}`);
+
+  // Send audio filename via WebSocket to all connected clients
+  wss.clients.forEach((client: any) => {
+    if (client.readyState === 1) { // WebSocket.OPEN
+      console.log("Sending audio notification to client");
+      client.send(JSON.stringify({
+        type: "audio",
+        filename,
+        message: latestMessage.message
+      }));
+    }
+  });
 
   return {
     success: true,
