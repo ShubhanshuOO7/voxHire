@@ -39,6 +39,7 @@ export const ttsFunction = async (interviewId: string) => {
 
   // Send audio filename via WebSocket to all connected clients
   wss.clients.forEach((client: any) => {
+    console.log("Total clients:", wss.clients.size);
     if (client.readyState === 1) { // WebSocket.OPEN
       console.log("Sending audio notification to client");
       client.send(JSON.stringify({

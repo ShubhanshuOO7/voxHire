@@ -6,7 +6,6 @@ import cors from "cors"
 import {singleUpload } from "./multer.js";
 import path from "path";
 import {extractText,getDocumentProxy} from "unpdf"
-
 import { socketHandler } from "./socket.js";
 import {prisma} from "./db.js"
 import {preLlama} from "./Llama/Llama.js"
@@ -58,8 +57,8 @@ app.post("/api/v1/user/pre-interview",singleUpload,async(req,res)=>{
         }))
         console.log("Before Llama");
         
-        socketHandler(interview.id)
-        const response = await preLlama(result,filteredRepos,interview.id)
+        socketHandler(interview.id,filteredRepos,result)
+        
         
         // onLlama(interview.id)
                 //    console.log("After Llama")
@@ -113,21 +112,6 @@ app.post("/api/v1/user/pre-interview",singleUpload,async(req,res)=>{
 //     });
 //     }
 // })
-
-app.post("/api/v1/user/firtAud",(req,res)=>{
-    const id = req.query.id
-    if(typeof id=== "string"){
-        const filename = ttsFunction(id)
-        console.log(filename)
-        res.status(200).send({
-            filename
-        })
-
-    }else{
-        res.status(400).send({message:"Invalid search query"})
-    }
-   
-})
 
 app.listen(3001,()=>{
     console.log(process.env.DATABASE_URL)

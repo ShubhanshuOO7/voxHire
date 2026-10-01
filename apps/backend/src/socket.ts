@@ -2,12 +2,18 @@ import fs from "fs/promises"
 import { WebSocketServer } from "ws";
 import { transcribe } from "./exec.js";
 import { prisma } from "./db.js";
-import { onLlama } from "./Llama/Llama.js";
+import { onLlama, preLlama } from "./Llama/Llama.js";
 
 export const wss = new WebSocketServer({port:8080})
-
-export const socketHandler = (interviewId:string)=>{
-     wss.on("connection",(ws)=>{
+export const socketHandler = (interviewId:string,filteredRepos:any,result:any)=>{
+    console.log(interviewId)
+     wss.on("connection",async(ws)=>{
+         try {
+    await preLlama(result,filteredRepos,interviewId);
+  } catch (err) {
+    console.error("preLlama failed:", err);
+    return ws.close(1011, "init failed");
+  }
         console.log("Client connected for interview:", interviewId);
 
         ws.on('message',async(data:any)=>{
@@ -33,5 +39,3 @@ export const socketHandler = (interviewId:string)=>{
         })
     })
 }
-
-

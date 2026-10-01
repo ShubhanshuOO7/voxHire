@@ -5,39 +5,37 @@ import { BACKEND_URL } from "@/lib/config";
 import toWav from "audiobuffer-to-wav";
 import { useEffect, useRef, useState } from "react";
 type VoiceState = "aiResponse" | "userResponse";
-const socket = new WebSocket("ws://localhost:8080");
-const InterviewSession = ({
-  interviewId,
-  started,
-}: {
-  interviewId: string;
-  started: boolean;
-}) => {
+
+
+const InterviewSession = ({ interviewId }: { interviewId: string }) => {
   const [voiceState, setVoicestate] = useState<VoiceState>("aiResponse");
   const audioRef = useRef<HTMLAudioElement>(null);
-  const audioPlay = async () => {};
-  useEffect(() => {
-    socket.onopen = async () => {
-    //   try {
-    //     const filename = await axios.get(`${BACKEND_URL}/api/v1/user/firstAud`);
-    //     const audio = filename.data;
-    //     const audioUrl = `${BACKEND_URL}/audio/${audio}`;
-    //     if (!audioRef.current) {
-    //       console.error("❌ audioRef.current is NULL");
-    //       return;
-    //     }
-    //     if (audioRef.current) {
-    //       audioRef.current.src = audioUrl;
-    //       audioRef.current.play().catch((err) => {
-    //         console.error("Audio playback failed:", err);
-    //       });
-    //     }
-    //   } catch (error) {
-    //     console.error("Something is wrong in getting 1st audio");
-    //   }
-    };
+  const socketRef = useRef<WebSocket | null>(null);
+  const collectedAudio = useRef<Blob[]>([])
 
-    socket.onmessage = (event) => {
+  const startInterview = () => {
+    socketRef.current = new WebSocket("ws://localhost:8080");
+    console.log("socket connected");
+    socketRef.current.onopen = async () => {
+      //   try {
+      //     const filename = await axios.get(`${BACKEND_URL}/api/v1/user/firstAud`);
+      //     const audio = filename.data;
+      //     const audioUrl = `${BACKEND_URL}/audio/${audio}`;
+      //     if (!audioRef.current) {
+      //       console.error("❌ audioRef.current is NULL");
+      //       return;
+      //     }
+      //     if (audioRef.current) {
+      //       audioRef.current.src = audioUrl;
+      //       audioRef.current.play().catch((err) => {
+      //         console.error("Audio playback failed:", err);
+      //       });
+      //     }
+      //   } catch (error) {
+      //     console.error("Something is wrong in getting 1st audio");
+      //   }
+    };
+    socketRef.current.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         console.log("WebSocket message received:", data);
@@ -63,20 +61,18 @@ const InterviewSession = ({
     };
 
     return () => {
-      socket.onmessage = null;
+      socketRef.current = null;
     };
-  }, []);
+  };
 
   const vad = useMicVAD({
     onnxWASMBasePath:
       "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
     baseAssetPath:
       "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.27/dist/",
-    onSpeechStart: async () => {
-      if (voiceState == "aiResponse") {
-        return;
-      }
-
+    onSpeechStart: async() => {
+      if(voiceState=="aiResponse")return
+      console.log("🗣️ SPEECH DETECTED");
       //    const stream = await navigator.mediaDevices.getUserMedia({
       //         audio: true
       //     });
@@ -88,6 +84,7 @@ const InterviewSession = ({
       //     }
       console.log("Recording started");
       console.log(vad);
+      
     },
     onSpeechEnd: async (audio) => {
       const formData = new FormData();
@@ -99,8 +96,15 @@ const InterviewSession = ({
       const arrayBuffer = audio.slice().buffer;
       const wavBlob = new Blob([wavArrayBuffer], {
         type: "audio/wav",
-      });
-      socket.send(wavBlob);
+      });      
+      collectedAudio.current.push(wavBlob)
+
+      const finalBlob = new Blob(collectedAudio.current,{
+        type: "audio/wav"
+      })
+      setTimeout(() => {
+       socketRef.current?.send(finalBlob);
+      }, 5000);
       console.log("📤 Sent audio to backend");
       setVoicestate("aiResponse");
       // console.log(wavBlob)
@@ -126,6 +130,7 @@ const InterviewSession = ({
       // })
       // chunks.current = []
     },
+    
   });
   return (
     // try to put these vad.start after socker connection and try to put these socket render on clicking start
@@ -133,17 +138,44 @@ const InterviewSession = ({
       <audio
         ref={audioRef}
         onPlay={() => {
-          setVoicestate("aiResponse");
           vad.pause();
+          console.log(`Voice state at onplay -> ${voiceState}`);
         }}
-        onEnded={() => {
+        onEnded={async () => {
           console.log("🤖 AI finished speaking");
-          console.log("🎤 Starting VAD");
-          vad.start();
+          console.log("🎤 Starting VAD...");
+          try {
+            await vad.start();
+            console.log("✅ VAD started successfully");
+          } catch (error) {
+            console.error("❌ VAD start failed:", error);
+          }
         }}
       />
       <Button onClick={vad.pause}>Stop</Button>
-      {!started && <Button>Start Interview</Button>}
+      <Button
+        onClick={() => {
+          startInterview();
+          vad.pause()
+          setVoicestate("userResponse");
+        }}
+      >
+        Start Interview
+      </Button>
+      <Button
+        onClick={async () => {
+          console.log("🎤 Manual VAD start");
+          try {
+            await vad.start();
+            console.log({ loading: vad.loading, errored: vad.errored, listening: vad.listening });
+            console.log("✅ Manual VAD start successful");
+          } catch (error) {
+            console.error("❌ Manual VAD start failed:", error);
+          }
+        }}
+      >
+        Start VAD
+      </Button>
     </div>
   );
 };
