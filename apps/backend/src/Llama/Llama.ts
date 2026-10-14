@@ -45,6 +45,7 @@ export const preLlama = async (
         },
         body: JSON.stringify({
           model: "dots-studio/dots-3-note-preview:free",
+           // model: "apodex/apodex-1.1-mini:free",
           messages: [
             {
               role: "user",
@@ -81,6 +82,9 @@ export const preLlama = async (
     //  console.log(transcript)
     return data.choices[0].message;
   } catch (error) {
+    console.log(error)
+    if(error instanceof Error)
+    console.error(`HTTP status code -> ${error}`)
     console.error("Llama() failed:", error);
     throw error;
   }

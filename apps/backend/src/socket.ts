@@ -17,6 +17,7 @@ export const socketHandler = (interviewId:string,filteredRepos:any,result:any)=>
         console.log("Client connected for interview:", interviewId);
 
         ws.on('message',async(data:any)=>{
+                console.log(`Yeh aaya hai message -> ${data}`)
                 console.log("Received audio data for interview:", interviewId);
                    const audioPath = `uploads/audio-${Date.now()}.wav`
                    await fs.writeFile(audioPath,data)
