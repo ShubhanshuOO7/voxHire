@@ -6,7 +6,7 @@ import { onLlama, preLlama } from "./Llama/Llama.js";
 
 export const wss = new WebSocketServer({port:8080})
 export const socketHandler = (interviewId:string,filteredRepos:any,result:any)=>{
-    console.log(interviewId)
+    console.log(`Connection ho gaya hai paaji -> ${interviewId}`)
      wss.on("connection",async(ws)=>{
          try {
     await preLlama(result,filteredRepos,interviewId);

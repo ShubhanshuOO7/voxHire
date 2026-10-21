@@ -42,24 +42,24 @@ export const ttsFunction = async (interviewId: string) => {
       );
     }
   });
-  const tts = new UniversalEdgeTTS(
-    text,
-    "en-US-AriaNeural",
-  );
-  console.log("Before synthesize");
-  const result = await tts.synthesize();
-  console.log("after synthesize");
-  console.log(result);
-  const filename = `${Date.now()}.mp3`;
-  const filepath = `audio/${filename}`;
-  await Bun.write(filepath, result.audio);
-  console.log(`Audio generated: ${filename}`);
+  // const tts = new UniversalEdgeTTS(
+  //   text,
+  //   "en-US-AriaNeural",
+  // );
+  // console.log("Before synthesize");
+  // const result = await tts.synthesize();
+  // console.log("after synthesize");
+  // console.log(result);
+  // const filename = `${Date.now()}.mp3`;
+  // const filepath = `audio/${filename}`;
+  // await Bun.write(filepath, result.audio);
+  // console.log(`Audio generated: ${filename}`);
 
   // Send audio filename via WebSocket to all connected clients
 
   return {
     success: true,
-    filename,
-    filepath,
+    // filename,
+    // filepath,
   };
 };

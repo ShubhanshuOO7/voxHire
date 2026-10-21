@@ -10,9 +10,9 @@ const InterviewSession = ({ interviewId }: { interviewId: string }) => {
   const [voiceState, setVoicestate] = useState<VoiceState>("aiResponse");
   const audioRef = useRef<HTMLAudioElement>(null);
   const socketRef = useRef<WebSocket | null>(null);
-   const collectedAudio = useRef<Blob[]>([]);
+  const collectedAudio = useRef<Blob[]>([]);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-
+  const silenceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startInterview = () => {
     socketRef.current = new WebSocket("ws://localhost:8080");
     console.log("socket connected");
@@ -72,32 +72,32 @@ const InterviewSession = ({ interviewId }: { interviewId: string }) => {
     //   }
     // };
     socketRef.current.onmessage = (event) => {
-  try {
-    const data = JSON.parse(event.data);
-    console.log("WebSocket message received:", data);
-
-    vad.pause(); 
-    setVoicestate("aiResponse");
-
-    const utterance = new SpeechSynthesisUtterance(data.message);
-    utteranceRef.current = utterance; 
-
-    utterance.onend = async () => {
-      setVoicestate("userResponse");
       try {
-        await vad.start();
-      } catch (error) {
-        console.error("VAD failed to start:", error);
+        const data = JSON.parse(event.data);
+        console.log("WebSocket message received:", data);
+
+        vad.pause();
+        setVoicestate("aiResponse");
+
+        const utterance = new SpeechSynthesisUtterance(data.message);
+        utteranceRef.current = utterance;
+
+        utterance.onend = async () => {
+          setVoicestate("userResponse");
+          try {
+            await vad.start();
+          } catch (error) {
+            console.error("VAD failed to start:", error);
+          }
+        };
+        utterance.onerror = (e) => console.error("TTS error:", e);
+
+        window.speechSynthesis.cancel(); // clear anything stuck in the queue
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        console.log("Received non-JSON message:", event.data);
       }
     };
-    utterance.onerror = (e) => console.error("TTS error:", e);
-
-    window.speechSynthesis.cancel(); // clear anything stuck in the queue
-    window.speechSynthesis.speak(utterance);
-  } catch (e) {
-    console.log("Received non-JSON message:", event.data);
-  }
-};
     return () => {
       socketRef.current = null;
     };
@@ -109,6 +109,10 @@ const InterviewSession = ({ interviewId }: { interviewId: string }) => {
     baseAssetPath:
       "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.27/dist/",
     onSpeechStart: async () => {
+      if (silenceTimer.current) {
+        clearTimeout(silenceTimer.current);
+        silenceTimer.current = null;
+      }
       if (voiceState == "aiResponse") return;
       console.log("🗣️ SPEECH DETECTED");
       //    const stream = await navigator.mediaDevices.getUserMedia({
@@ -134,13 +138,14 @@ const InterviewSession = ({ interviewId }: { interviewId: string }) => {
       const wavBlob = new Blob([wavArrayBuffer], {
         type: "audio/wav",
       });
-       collectedAudio.current.push(wavBlob);
+      collectedAudio.current.push(wavBlob);
 
       const finalBlob = new Blob(collectedAudio.current, {
         type: "audio/wav",
       });
-      setTimeout(() => {
+      silenceTimer.current = setTimeout(() => {
         socketRef.current?.send(finalBlob);
+        collectedAudio.current = [];
         console.log("📤 Sent audio to backend");
       }, 5000);
       setVoicestate("aiResponse");
@@ -171,51 +176,41 @@ const InterviewSession = ({ interviewId }: { interviewId: string }) => {
   return (
     // try to put these vad.start after socker connection and try to put these socket render on clicking start
     <div>
-      <audio
-        ref={audioRef}
-        onPlay={() => {
-          vad.pause();
-          console.log(`Voice state at onplay -> ${voiceState}`);
-        }}
-        onEnded={async () => {
-          console.log("🤖 AI finished speaking");
-          console.log("🎤 Starting VAD...");
-          try {
-            await vad.start();
-            console.log("✅ VAD started successfully");
-          } catch (error) {
-            console.error("❌ VAD start failed:", error);
-          }
-        }}
-      />
-      <Button onClick={vad.pause}>Stop</Button>
-      <Button
-        onClick={() => {
-          startInterview();
-          vad.pause();
-          setVoicestate("userResponse");
-        }}
-      >
-        Start Interview
-      </Button>
-      <Button
-        onClick={async () => {
-          console.log("🎤 Manual VAD start");
-          try {
-            await vad.start();
-            console.log({
-              loading: vad.loading,
-              errored: vad.errored,
-              listening: vad.listening,
-            });
-            console.log("✅ Manual VAD start successful");
-          } catch (error) {
-            console.error("❌ Manual VAD start failed:", error);
-          }
-        }}
-      >
-        Start VAD
-      </Button>
+      <div className="grid flex justify-center items-center grid-cols-2">
+        <div className="mt-40 ml-20">
+          <div className="font-semibold">
+            Practice interviews with AI. <br /> Get interview-ready.
+          <audio
+            ref={audioRef}
+            onPlay={() => {
+              vad.pause();
+              console.log(`Voice state at onplay -> ${voiceState}`);
+            }}
+            onEnded={async () => {
+              console.log("🤖 AI finished speaking");
+              console.log("🎤 Starting VAD...");
+              try {
+                await vad.start();
+                console.log("✅ VAD started successfully");
+              } catch (error) {
+                console.error("❌ VAD start failed:", error);
+              }
+            }}
+          />
+          </div>
+          <Button onClick={vad.pause}>Stop</Button>
+          <Button
+            onClick={() => {
+              startInterview();
+              vad.pause();
+              setVoicestate("userResponse");
+            }}
+          >
+            Start Interview
+          </Button>
+        </div>
+        <div>Amma sakuri hoon main.</div>
+      </div>
     </div>
   );
 };
