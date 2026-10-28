@@ -1,9 +1,13 @@
 import { serve } from "bun";
 import index from "./index.html";
+import { file } from "bun";
 
 const server = serve({
   routes: {
+
     // Serve index.html for all unmatched routes.
+    "/public/voxHire.png": () =>
+    new Response(Bun.file("./public/voxHire.png")),
     "/*": index,
 
     "/api/hello": {

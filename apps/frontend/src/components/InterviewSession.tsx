@@ -176,9 +176,9 @@ const InterviewSession = ({ interviewId }: { interviewId: string }) => {
   return (
     // try to put these vad.start after socker connection and try to put these socket render on clicking start
     <div>
-      <div className="grid flex justify-center items-center grid-cols-2">
-        <div className="mt-40 ml-20">
-          <div className="font-semibold">
+      <div className="h-screen grid flex justify-center items-center grid-cols-2 bg-indigo-200">
+        <div className="ml-20">
+          <div className="font-bold text-4xl">
             Practice interviews with AI. <br /> Get interview-ready.
           <audio
             ref={audioRef}
@@ -198,18 +198,25 @@ const InterviewSession = ({ interviewId }: { interviewId: string }) => {
             }}
           />
           </div>
-          <Button onClick={vad.pause}>Stop</Button>
-          <Button
+          <div className="mt-4">
+          <span className="font-semibold">Prepare for real-world interviews with your personal AI interviewer. Answer role-specific questions,build confidence, and get instant AI-powered feedback to improve your skills and land your dream job.</span>
+          </div>
+          <div className="mt-10">
+          {/* <Button onClick={vad.pause}>Stop</Button> */}
+          <Button className="bg-indigo-600"  
             onClick={() => {
               startInterview();
               vad.pause();
               setVoicestate("userResponse");
             }}
           >
-            Start Interview
+            Start an AI interview
           </Button>
+          </div>
         </div>
-        <div>Amma sakuri hoon main.</div>
+        <div>
+          <img className="h-100px w-xl  mx-3" src="/public/voxHire.png" alt="AI interviewer"/>
+        </div>
       </div>
     </div>
   );

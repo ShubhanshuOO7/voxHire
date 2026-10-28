@@ -157,3 +157,12 @@ Learn more about the power of Turborepo:
 - [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
 - [Configuration Options](https://turborepo.dev/docs/reference/configuration)
 - [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+
+
+# TODOS
+
+- I need to add a popup if someone write a wrong link we need to send the message
+- Date-> 20-08-26
+WHY WE ARE SENDING THE REQUESTS EVEN WITHOUT EVEN SPEAKING 
+  - THE PROBLEM IS FOR THE PROCESSING TIME IT TAKE IT AS A ONSPEECHSTART AND SEND THE BLANK VOICE 
+  - or ot should be something else 
